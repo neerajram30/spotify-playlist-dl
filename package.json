@@ -1,0 +1,28 @@
+{
+  "name": "spotify-playlist-downloader",
+  "bin":"./index.js",
+  "version": "1.0.0",
+  "description": "cli tool to automatically download spotify playlist to local storage",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neerajram30/spotify-playlist-downloader.git"
+  },
+  "keywords": [
+    "Spotify",
+    "Music"
+  ],
+  "author": "Neeraj",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/neerajram30/spotify-playlist-downloader/issues"
+  },
+  "homepage": "https://github.com/neerajram30/spotify-playlist-downloader#readme",
+  "dependencies": {
+    "chalk": "^5.0.1",
+    "commander": "^9.4.0"
+  }
+}
