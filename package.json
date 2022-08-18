@@ -1,6 +1,6 @@
 {
   "name": "spotify-playlist-downloader",
-  "bin":"./index.js",
+  "bin": "./index.js",
   "version": "1.0.0",
   "description": "cli tool to automatically download spotify playlist to local storage",
   "main": "index.js",
@@ -22,7 +22,9 @@
   },
   "homepage": "https://github.com/neerajram30/spotify-playlist-downloader#readme",
   "dependencies": {
+    "axios": "^0.27.2",
     "chalk": "^5.0.1",
-    "commander": "^9.4.0"
+    "commander": "^9.4.0",
+    "node-fetch": "^2.6.7"
   }
 }
