@@ -30,7 +30,7 @@ const scopes = [
   'user-follow-modify'
 ];
 
-
+//configure spotify api
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
@@ -60,7 +60,7 @@ app.get('/callback', (req, res) => {
       const expires_in = data.body['expires_in'];
       spotifyApi.setAccessToken(access_token);
       spotifyApi.setRefreshToken(refresh_token);
-      getMyPlaylist()
+      getUser()
       console.log(
         `Sucessfully retreived access token. Expires in ${expires_in} s.`
       );
@@ -84,14 +84,13 @@ app.listen(8888, () =>
   )
 );
 
-module.exports = spotifyApi;
-
-async function getMyPlaylist() {
+//Get the users
+async function getUser() {
   const me = await spotifyApi.getMe();
   console.log('Welcome to spotify smart downloader '+ me.body.display_name);
   getUserPlaylists(me.body.id);
 }
-
+//Get uses playlist
 async function getUserPlaylists(id) {
   const data = await spotifyApi.getUserPlaylists(id);
   let playlists = []
@@ -111,6 +110,7 @@ async function getUserPlaylists(id) {
   })
 }
 
+//Get the tracks inside a playlist
 async function getPlaylistTracks(playlistId) {
 
   const data = await spotifyApi.getPlaylistTracks(playlistId, {
@@ -149,12 +149,14 @@ async function getPlaylistTracks(playlistId) {
     
     }
     else {
-      getMyPlaylist();
+      getUser();
     }
     
   })
 }
 
+
+//Search youtube for songs links
 function getSearch(track) {
   YouTube.searchOne(track)
     .then(res => {
@@ -163,12 +165,14 @@ function getSearch(track) {
     .catch(console.error);
 }
 
+//Extract the id from the youtube url
 function downloadSongs(urls, track_name) {
   urls = urls.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
   url = urls[2]
   getDownload(url, track_name)
 }
 
+//Download the songs from youtube id
 function getDownload(url, track_name) {
   let stream = ytdl(url, {
     quality: 'highestaudio',
