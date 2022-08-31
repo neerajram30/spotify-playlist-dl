@@ -1,22 +1,6 @@
 #! /usr/bin/env node
  const fetch = require('node-fetch');
-// const token = 'BQCYDrPxV4k5rGBVMnyP_Xrg2lLQ3n8a8pgitv4AYReJGiqDq7DFwyjaSssZrD_I8vNKVTrcimN0sXXcAC3LP1QQT9inFy265Jqs5PeUGqYJ0H0MAxoifWtR0fhCujYrnGbReojwxec1zXWb9bPra9TDd8GMgbvmVlhv7pDxbKS6F33pxNbZRecIJ8xCQUpLZqjY4CHNd0AnsyENm4mdoXTl6DE5MpaROT1N8l1wLOg4FN9KV82IpSduKKjO97cKotQW4pkH_-ay25wlDzzEe-tPRXhVDVgNyPr_w36NPeIyGW3-iqn-BMD1AvsGUYOIgQ';
-// const SpotifyWebApi = require('spotify-web-api-node');
 
-
-// const spotifyApi = new SpotifyWebApi({
-//   clientId: '161616d04b6847a1ab4adae981f96c0b',
-//   clientSecret: '2bf30e2822f148cd95a4a0935eaca2a6',
-//   redirectUri: 'http://localhost:8888/callback'
-// });
-
-
-// spotifyApi.getPlaylist('5qwUpzOKpeEn6EJt4PSgOp')
-//   .then(function(data) {
-//     console.log('Some information about this playlist', data.body);
-//   }, function(err) {
-//     console.log('Something went wrong!', err);
-//   });
 
 
 
@@ -24,10 +8,17 @@ const SpotifyWebApi = require('spotify-web-api-node');
 const express = require('express');
 const dotenv = require('dotenv');
 const YouTube = require("youtube-sr").default;
-const ytsearch = require('youtube-search-without-api-key')
 const yts = require( 'yt-search' )
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
+const download = require('./getList')
+
+const readline = require('readline');
 const ytdl = require('ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
+let inquirer  = require('inquirer')
+const { type } = require('os');
+const path ='/home/neeraj/Music/'
+
 dotenv.config();
 
 const scopes = [
@@ -52,14 +43,6 @@ const scopes = [
   'user-follow-modify'
 ];
 
-const YD = new YoutubeMp3Downloader({
-  "ffmpegPath": "/home/neeraj/snap/ffmpeg",                                          // FFmpeg binary location
-  "outputPath": "/home/neeraj/mp3",    // Output file location (default: the home directory)
-  "youtubeVideoQuality": "highestaudio",  // Desired video quality (default: highestaudio)
-  "queueParallelism": 2,                  // Download parallelism (default: 1)
-  "progressTimeout": 2000,                // Interval in ms for the progress reports (default: 1000)
-  "allowWebm": false                      // Enable download from WebM sources (default: false)
-});
 
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.CLIENT_ID,
@@ -84,7 +67,7 @@ app.get('/callback', (req, res) => {
     return;
   }
 
-  spotifyApi
+spotifyApi
     .authorizationCodeGrant(code)
     .then(data => {
       const access_token = data.body['access_token'];
@@ -98,7 +81,7 @@ app.get('/callback', (req, res) => {
       console.log('refresh_token:', refresh_token);
       console.log(spotifyApi);
       
-      getMyPlaylist()
+       getMyPlaylist()
       
       
       console.log(
@@ -107,26 +90,7 @@ app.get('/callback', (req, res) => {
         res.send('Success! You can now close the window.');
 
         
-
-//     fetch('https://api.spotify.com/v1/playlists/5qwUpzOKpeEn6EJt4PSgOp',
-//     {
-//        method: 'GET',
-//        headers: {
-//         Authorization: `Bearer ${access_token}`
-//       }
-//     })
-//     .then(res => res.json())
-//     .then(json => {
-//       // console.log(json.tracks.items[0].track.name);
-//       let songs = json.tracks.items;
-  
-//       for (i in songs) {
-//         song = songs[i];
-//         console.log(song.track.name);
-//         // Do something...
-//     }
-// })
-// .catch(err => console.log(err));    
+ 
         
       setInterval(async () => {
         const data = await spotifyApi.refreshAccessToken();
@@ -157,6 +121,7 @@ async function getMyPlaylist(){
   const me = await spotifyApi.getMe();
   console.log('Name ->' + me.body.display_name);
   getUserPlaylists(me.body.id);
+  console.log(me.body.id);
 }
 
 async function getUserPlaylists(id) {
@@ -165,17 +130,31 @@ async function getUserPlaylists(id) {
 
   for (let playlist of data.body.items) {
     //console.log(playlist.name + " " + playlist.id)
-    let tracks = await getPlaylistTracks(playlist.id, playlist.name);
-    //console.log(tracks);
-    getSearch(tracks);
+    //let tracks = await getPlaylistTracks(playlist.id, playlist.name);
+    playlists.push({'name':playlist.name,'value':playlist.id})
+    //getSearch(tracks);
     // const tracksJSON = { tracks }
     // let data = JSON.stringify(tracksJSON);
     // console.log(data);
     //fs.writeFileSync(playlist.name+'.json', data);
   }
+  console.log(playlists);
+ inquirer.prompt([
+  {
+    type:'list',
+    name:'Playlists',
+    message:'Select the playlist',
+    choices:playlists,
+  }
+
+ ]).then((answer)=>{
+  console.log(answer.Playlists)
+  getPlaylistTracks(answer.Playlists)
+  
+ })
 }
 
-async function getPlaylistTracks(playlistId, playlistName) {
+async function getPlaylistTracks(playlistId) {
 
   const data = await spotifyApi.getPlaylistTracks(playlistId, {
     offset: 1,
@@ -194,29 +173,50 @@ async function getPlaylistTracks(playlistId, playlistName) {
     // console.log(track.name + " : " + track.artists[0].name)
     //console.log(tracks);
   }
-
-
-  
-  console.log("---------------+++++++++++++++++++++++++")
-  return tracks;
-}
-
-async function getSearch(tracks){
-  let results = []
+  console.log(tracks)
   for(i in tracks){
-    YouTube.searchOne(tracks[i])
-    .then(res => {
-      downloadSongs(res.url)
-    }) // https://www.youtube.com/watch?v=XXXXXXX
-    .catch(console.error);
+    getSearch(tracks[i])
   }
 }
 
-async function downloadSongs(urls){
-  urls = urls.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
-  url = urls[2]
-  console.log(url);
-//   let info = await ytdl.getInfo(urls);
-// let audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-// console.log('Formats with only audio: ' + audioFormats.length);
+function getSearch(track){
+  // for(i in tracks){
+    YouTube.searchOne(track)
+    .then(res => {
+      downloadSongs(res.url, track)
+      //console.log('url: '+res.url + 'track name: '+track);
+    }) // https://www.youtube.com/watch?v=XXXXXXX
+    .catch(console.error);
+  // }
+}
+
+ function downloadSongs(urls, track_name){
+   urls = urls.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
+   url = urls[2]
+   //console.log(url+track_name);
+   getDownload(url, track_name)
+ 
+
+}
+
+function getDownload(url, track_name){
+  
+  let stream = ytdl(url, {
+    quality: 'highestaudio',
+  });
+  
+
+  let start = Date.now();
+  ffmpeg(stream)
+  .audioBitrate(128)
+  .save(
+    path+track_name+'.mp3'
+    )
+    .on('progress', p => {
+      readline.cursorTo(process.stdout, 0);
+      process.stdout.write(`${p.targetSize}kb downloaded`);
+    })
+    .on('end', () => {
+      console.log(`\ndone, thanks - ${(Date.now() - start) / 1000}s`);
+    });
 }
